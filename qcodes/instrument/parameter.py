@@ -10,7 +10,7 @@ TODO (alexcjohnson) update this with the real duck-typing requirements or
 create an ABC for Parameter and MultiParameter - or just remove this statement
 if everyone is happy to use these classes.
 
-This file defines four classes of parameters:
+This file defines five classes of parameters:
 
 ``Parameter``, ``ArrayParameter``, and ``MultiParameter`` must be subclassed:
 
