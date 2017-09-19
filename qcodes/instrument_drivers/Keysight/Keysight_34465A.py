@@ -3,6 +3,7 @@
 from functools import partial
 import numpy as np
 import logging
+from typing import List, Dict
 
 from qcodes.instrument.parameter import ArrayParameter
 import qcodes.utils.validators as vals
