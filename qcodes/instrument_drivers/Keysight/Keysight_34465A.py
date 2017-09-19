@@ -362,6 +362,12 @@ class Keysight_34465A(VisaInstrument):
         if not silent:
             self.connect_message()
 
+    # We need to avoid updating the sweep parameter
+    def snapshot_base(self, update: bool=False) -> Dict:
+        params_to_skip_update = ['data_buffer']
+        super().snapshot_base(update=update,
+        params_to_skip_update=params_to_skip_update)
+
     def _get_voltage(self):
         # TODO: massive improvements!
         # The 'READ?' command will return anything the instrument is set up
