@@ -1050,25 +1050,21 @@ def length(conn: SomeConnection,
         return _len
 
 
-def get_data(conn: SomeConnection,
-             table_name: str,
-             columns: List[str],
-             start: int = None,
-             end: int = None,
-             ) -> List[List[Any]]:
+def _get_data_query(table_name: str,
+                    columns: List[str],
+                    start: int = None,
+                    end: int = None) -> str:
     """
-    Get data from the columns of a table.
-    Allows to specfiy a range.
+    Build sql query string for getting a subset of a table.
 
     Args:
-        conn: database connection
         table_name: name of the table
         columns: list of columns
         start: start of range (1 indedex)
         end: start of range (1 indedex)
 
     Returns:
-        the data requested
+        Query string
     """
     _columns = ",".join(columns)
     if start and end:
@@ -1099,9 +1095,58 @@ def get_data(conn: SomeConnection,
         SELECT {_columns}
         FROM "{table_name}"
         """
+    return query
+
+
+def get_data(conn: SomeConnection,
+             table_name: str,
+             columns: List[str],
+             start: int = None,
+             end: int = None) -> List[List[Any]]:
+    """
+    Get data from the columns of a table.
+    Allows to specfiy a range.
+
+    Args:
+        conn: database connection
+        table_name: name of the table
+        columns: list of columns
+        start: start of range (1 indedex)
+        end: start of range (1 indedex)
+
+    Returns:
+        the data requested
+    """
+    query = _get_data_query(table_name, columns, start, end)
     c = atomic_transaction(conn, query)
     res = many_many(c, *columns)
+    return res
 
+
+def get_columns(conn: SomeConnection,
+                table_name: str,
+                columns: List[str],
+                start: int = None,
+                end: int = None) -> Dict[str, np.ndarray]:
+    """
+    Get data from the columns of a table.
+    Allows to specfiy a range.
+
+    Args:
+        conn: database connection
+        table_name: name of the table
+        columns: list of columns
+        start: start of range (1 indedex)
+        end: start of range (1 indedex)
+
+    Returns:
+        the data requested
+    """
+    query = _get_data_query(table_name, columns, start, end)
+    curr = atomic_transaction(conn, query)
+    rows = curr.fetchall()
+    xs = np.array(rows).transpose()
+    res  = {c: xs[i] for i, c in enumerate(columns)}
     return res
 
 

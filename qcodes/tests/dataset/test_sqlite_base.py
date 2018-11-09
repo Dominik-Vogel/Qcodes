@@ -10,6 +10,8 @@ import hypothesis.strategies as hst
 from hypothesis import given
 import unicodedata
 
+import numpy as np
+
 from qcodes.dataset.descriptions import RunDescriber
 from qcodes.dataset.dependencies import InterDependencies
 import qcodes.dataset.sqlite_base as mut  # mut: module under test
@@ -19,6 +21,8 @@ from qcodes.dataset.param_spec import ParamSpec
 # pylint: disable=unused-import
 from qcodes.tests.dataset.temporary_databases import \
     empty_temp_db, experiment, dataset
+from qcodes.tests.dataset.dataset_fixtures import scalar_dataset
+# pylint: enable=unused-import
 from qcodes.tests.dataset.test_database_creation_and_upgrading import \
     error_caused_by
 
@@ -171,3 +175,27 @@ def test_update_runs_description(dataset):
 
     desc = RunDescriber(InterDependencies()).to_json()
     mut.update_run_description(dataset.conn, dataset.run_id, desc)
+
+
+def test_get_columns(scalar_dataset):
+    ds = scalar_dataset
+    params = ds.parameters.split(',')
+    # delete some random parameter to test it with an incomplete list
+    del params[-2]
+
+    ref = mut.get_data(ds.conn, ds.table_name, params)
+    ref = list(map(list, zip(*ref)))
+    ref_dict = {}
+    for column, name in zip(ref, params):
+        ref_dict[name] = np.array(column)
+
+    t = mut.get_columns(ds.conn, ds.table_name, params)
+    assert set(t.keys()) == set(ref_dict.keys())
+    for n_ref, v_ref in ref_dict.items():
+        v_test = t[n_ref]
+        assert type(v_test) == type(v_ref)
+        assert v_test.shape == v_ref.shape
+        assert np.allclose(v_test, v_ref)
+
+
+
